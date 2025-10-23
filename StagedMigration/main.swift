@@ -13,6 +13,9 @@ import CoreData
 var v1ModelChecksum: String!
 var v2ModelChecksum: String!
 var v3ModelChecksum: String!
+var v4ModelChecksum: String!
+
+var v2DBURL: URL!
 
 let cachesURL = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
 var tempURL = try FileManager.default.url(for: .itemReplacementDirectory, in: .userDomainMask, appropriateFor: cachesURL, create: true)
@@ -44,7 +47,7 @@ print(">>>Created V1, size = \(v1Size)")
 do
 {
 	// V1 -> V2
-	let v2DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
+	v2DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
 	try FileManager.default.copyItem(at: v1DBURL, to: v2DBURL)
 	
 	let v2ModelURL = Bundle.main.url(forResource: "V2", withExtension: "mom", subdirectory: "Model.momd")!
@@ -79,12 +82,31 @@ do
 	
 	let v3Size = try FileManager.default.attributesOfItem(atPath: v3DBURL.path())[.size] as! Int
 	print(">>>Migrated V2->V3, size = \(v3Size)")
+	
+	
+	// V3 -> V4
+	let v4DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
+	try FileManager.default.copyItem(at: v3DBURL, to: v4DBURL)
+	
+	let v4ModelURL = Bundle.main.url(forResource: "V4", withExtension: "mom", subdirectory: "Model.momd")!
+	let v4Model = NSManagedObjectModel(contentsOf: v4ModelURL)!
+	v4ModelChecksum = v4Model.versionChecksum
+	let v4Container = NSPersistentContainer(name: "Model", managedObjectModel: v4Model)
+	let v4StoreDescription = NSPersistentStoreDescription(url: v4DBURL)
+	v4StoreDescription.type = NSBinaryStoreType
+	v4Container.persistentStoreDescriptions = [v4StoreDescription]
+	v4Container.loadPersistentStores { _, error in
+		print(">>>Migrating V3->V4, error: \(String(describing: error?.localizedDescription))")
+	}
+	
+	let v4Size = try FileManager.default.attributesOfItem(atPath: v4DBURL.path())[.size] as! Int
+	print(">>>Migrated V3->V4, size = \(v4Size)")
 }
 
 
 do
 {
-	// V1 -> V3, lighweight migration should fail
+	// V1 -> V3
 	let v3DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
 	try FileManager.default.copyItem(at: v1DBURL, to: v3DBURL)
 	
@@ -102,7 +124,7 @@ do
 
 do
 {
-	// V1 -> V3, configuration 1
+	// V1 -> V3
 	let v3DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
 	try FileManager.default.copyItem(at: v1DBURL, to: v3DBURL)
 	
@@ -130,7 +152,7 @@ do
 
 do
 {
-	// V1 -> V3, configuration 2
+	// V1 -> V3
 	let v3DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
 	try FileManager.default.copyItem(at: v1DBURL, to: v3DBURL)
 	
@@ -156,7 +178,7 @@ do
 
 do
 {
-	// V1 -> V3, configuration 3
+	// V1 -> V3
 	let v3DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
 	try FileManager.default.copyItem(at: v1DBURL, to: v3DBURL)
 	
@@ -183,7 +205,7 @@ do
 
 do
 {
-	// V1 -> V3, configuration 4
+	// V1 -> V3
 	let v3DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
 	try FileManager.default.copyItem(at: v1DBURL, to: v3DBURL)
 	
@@ -210,7 +232,7 @@ do
 
 do
 {
-	// V1 -> V3, configuration 5
+	// V1 -> V3
 	let v3DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
 	try FileManager.default.copyItem(at: v1DBURL, to: v3DBURL)
 	
@@ -233,5 +255,225 @@ do
 	v3Container.persistentStoreDescriptions = [v3StoreDescription]
 	v3Container.loadPersistentStores { _, error in
 		print(">>>Migrating V1->V3, custom[1->2]->custom[2->3], error: \(String(describing: error?.localizedDescription))")
+	}
+}
+
+
+do
+{
+	// V1 -> V4
+	let v4DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
+	try FileManager.default.copyItem(at: v1DBURL, to: v4DBURL)
+	
+	let v4ModelURL = Bundle.main.url(forResource: "V4", withExtension: "mom", subdirectory: "Model.momd")!
+	let v4Model = NSManagedObjectModel(contentsOf: v4ModelURL)!
+	let v4Container = NSPersistentContainer(name: "Model", managedObjectModel: v4Model)
+	let v4StoreDescription = NSPersistentStoreDescription(url: v4DBURL)
+	v4StoreDescription.type = NSBinaryStoreType
+	v4Container.persistentStoreDescriptions = [v4StoreDescription]
+	v4Container.loadPersistentStores { _, error in
+		print(">>>Migrating V1->V4, error: \(String(describing: error?.localizedDescription))")
+	}
+}
+
+
+do
+{
+	// V2 -> V4
+	let v4DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
+	try FileManager.default.copyItem(at: v2DBURL, to: v4DBURL)
+	
+	let v4ModelURL = Bundle.main.url(forResource: "V4", withExtension: "mom", subdirectory: "Model.momd")!
+	let v4Model = NSManagedObjectModel(contentsOf: v4ModelURL)!
+	let v4Container = NSPersistentContainer(name: "Model", managedObjectModel: v4Model)
+	let v4StoreDescription = NSPersistentStoreDescription(url: v4DBURL)
+	v4StoreDescription.type = NSBinaryStoreType
+	v4Container.persistentStoreDescriptions = [v4StoreDescription]
+	v4Container.loadPersistentStores { _, error in
+		print(">>>Migrating V2->V4, error: \(String(describing: error?.localizedDescription))")
+	}
+}
+
+
+do
+{
+	// V1 -> V4
+	let v4DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
+	try FileManager.default.copyItem(at: v1DBURL, to: v4DBURL)
+	
+	let v4ModelURL = Bundle.main.url(forResource: "V4", withExtension: "mom", subdirectory: "Model.momd")!
+	let v4Model = NSManagedObjectModel(contentsOf: v4ModelURL)!
+	let v4Container = NSPersistentContainer(name: "Model", managedObjectModel: v4Model)
+	let v4StoreDescription = NSPersistentStoreDescription(url: v4DBURL)
+	v4StoreDescription.type = NSBinaryStoreType
+	
+	let migrationManager = NSStagedMigrationManager([
+		NSCustomMigrationStage(
+			migratingFrom: .init(name: "Model", in: nil, versionChecksum: v1ModelChecksum),
+			to: .init(name: "Model", in: nil, versionChecksum: v2ModelChecksum)),
+		NSLightweightMigrationStage([
+			v3ModelChecksum,
+			v4ModelChecksum,
+		]),
+	])
+	v4StoreDescription.setOption(migrationManager, forKey: NSPersistentStoreStagedMigrationManagerOptionKey)
+	
+	v4Container.persistentStoreDescriptions = [v4StoreDescription]
+	v4Container.loadPersistentStores { _, error in
+		print(">>>Migrating V1->V4, custom[1->2]->lightweight[3, 4], error: \(String(describing: error?.localizedDescription))")
+	}
+}
+
+
+do
+{
+	// V1 -> V4
+	let v4DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
+	try FileManager.default.copyItem(at: v1DBURL, to: v4DBURL)
+	
+	let v4ModelURL = Bundle.main.url(forResource: "V4", withExtension: "mom", subdirectory: "Model.momd")!
+	let v4Model = NSManagedObjectModel(contentsOf: v4ModelURL)!
+	let v4Container = NSPersistentContainer(name: "Model", managedObjectModel: v4Model)
+	let v4StoreDescription = NSPersistentStoreDescription(url: v4DBURL)
+	v4StoreDescription.type = NSBinaryStoreType
+	
+	let migrationManager = NSStagedMigrationManager([
+		NSLightweightMigrationStage([
+			v3ModelChecksum,
+			v4ModelChecksum,
+		]),
+		NSCustomMigrationStage(
+			migratingFrom: .init(name: "Model", in: nil, versionChecksum: v1ModelChecksum),
+			to: .init(name: "Model", in: nil, versionChecksum: v2ModelChecksum)),
+	])
+	v4StoreDescription.setOption(migrationManager, forKey: NSPersistentStoreStagedMigrationManagerOptionKey)
+	
+	v4Container.persistentStoreDescriptions = [v4StoreDescription]
+	v4Container.loadPersistentStores { _, error in
+		print(">>>Migrating V1->V4, lightweight[3, 4]->custom[1->2], error: \(String(describing: error?.localizedDescription))")
+	}
+}
+
+
+do
+{
+	// V1 -> V4
+	let v4DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
+	try FileManager.default.copyItem(at: v1DBURL, to: v4DBURL)
+	
+	let v4ModelURL = Bundle.main.url(forResource: "V4", withExtension: "mom", subdirectory: "Model.momd")!
+	let v4Model = NSManagedObjectModel(contentsOf: v4ModelURL)!
+	let v4Container = NSPersistentContainer(name: "Model", managedObjectModel: v4Model)
+	let v4StoreDescription = NSPersistentStoreDescription(url: v4DBURL)
+	v4StoreDescription.type = NSBinaryStoreType
+	
+	let migrationManager = NSStagedMigrationManager([
+		NSLightweightMigrationStage([
+			v1ModelChecksum,
+			v2ModelChecksum,
+		]),
+		NSLightweightMigrationStage([
+			v3ModelChecksum,
+			v4ModelChecksum,
+		]),
+	])
+	v4StoreDescription.setOption(migrationManager, forKey: NSPersistentStoreStagedMigrationManagerOptionKey)
+	
+	v4Container.persistentStoreDescriptions = [v4StoreDescription]
+	v4Container.loadPersistentStores { _, error in
+		print(">>>Migrating V1->V4, lightweight[1, 2]->lightweight[3, 4], error: \(String(describing: error?.localizedDescription))")
+	}
+}
+
+
+do
+{
+	// V1 -> V4
+	let v4DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
+	try FileManager.default.copyItem(at: v1DBURL, to: v4DBURL)
+	
+	let v4ModelURL = Bundle.main.url(forResource: "V4", withExtension: "mom", subdirectory: "Model.momd")!
+	let v4Model = NSManagedObjectModel(contentsOf: v4ModelURL)!
+	let v4Container = NSPersistentContainer(name: "Model", managedObjectModel: v4Model)
+	let v4StoreDescription = NSPersistentStoreDescription(url: v4DBURL)
+	v4StoreDescription.type = NSBinaryStoreType
+	
+	let migrationManager = NSStagedMigrationManager([
+		NSLightweightMigrationStage([
+			v1ModelChecksum,
+		]),
+		NSCustomMigrationStage(
+			migratingFrom: .init(name: "Model", in: nil, versionChecksum: v2ModelChecksum),
+			to: .init(name: "Model", in: nil, versionChecksum: v3ModelChecksum)),
+		NSLightweightMigrationStage([
+			v4ModelChecksum,
+		]),
+	])
+	v4StoreDescription.setOption(migrationManager, forKey: NSPersistentStoreStagedMigrationManagerOptionKey)
+	
+	v4Container.persistentStoreDescriptions = [v4StoreDescription]
+	v4Container.loadPersistentStores { _, error in
+		print(">>>Migrating V1->V4, lightweight[1]->custom[2->3]->lightweight[4], error: \(String(describing: error?.localizedDescription))")
+	}
+}
+
+
+
+do
+{
+	// V1 -> V4
+	let v4DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
+	try FileManager.default.copyItem(at: v1DBURL, to: v4DBURL)
+	
+	let v4ModelURL = Bundle.main.url(forResource: "V4", withExtension: "mom", subdirectory: "Model.momd")!
+	let v4Model = NSManagedObjectModel(contentsOf: v4ModelURL)!
+	let v4Container = NSPersistentContainer(name: "Model", managedObjectModel: v4Model)
+	let v4StoreDescription = NSPersistentStoreDescription(url: v4DBURL)
+	v4StoreDescription.type = NSBinaryStoreType
+	
+	let migrationManager = NSStagedMigrationManager([
+		NSLightweightMigrationStage([
+			v1ModelChecksum,
+			v4ModelChecksum,
+		]),
+		NSCustomMigrationStage(
+			migratingFrom: .init(name: "Model", in: nil, versionChecksum: v2ModelChecksum),
+			to: .init(name: "Model", in: nil, versionChecksum: v3ModelChecksum)),
+	])
+	v4StoreDescription.setOption(migrationManager, forKey: NSPersistentStoreStagedMigrationManagerOptionKey)
+	
+	v4Container.persistentStoreDescriptions = [v4StoreDescription]
+	v4Container.loadPersistentStores { _, error in
+		print(">>>Migrating V1->V4, lightweight[1,4]->custom[2->3], error: \(String(describing: error?.localizedDescription))")
+	}
+}
+
+
+do
+{
+	// V1 -> V4
+	let v4DBURL = tempURL.appending(path: UUID().uuidString, directoryHint: .notDirectory)
+	try FileManager.default.copyItem(at: v1DBURL, to: v4DBURL)
+	
+	let v4ModelURL = Bundle.main.url(forResource: "V4", withExtension: "mom", subdirectory: "Model.momd")!
+	let v4Model = NSManagedObjectModel(contentsOf: v4ModelURL)!
+	let v4Container = NSPersistentContainer(name: "Model", managedObjectModel: v4Model)
+	let v4StoreDescription = NSPersistentStoreDescription(url: v4DBURL)
+	v4StoreDescription.type = NSBinaryStoreType
+	
+	let migrationManager = NSStagedMigrationManager([
+		NSCustomMigrationStage(
+			migratingFrom: .init(name: "Model", in: nil, versionChecksum: v2ModelChecksum),
+			to: .init(name: "Model", in: nil, versionChecksum: v3ModelChecksum)),
+		NSLightweightMigrationStage([
+			v1ModelChecksum,
+			v4ModelChecksum,
+		]),
+	])
+	v4StoreDescription.setOption(migrationManager, forKey: NSPersistentStoreStagedMigrationManagerOptionKey)
+	
+	v4Container.persistentStoreDescriptions = [v4StoreDescription]
+	v4Container.loadPersistentStores { _, error in
+		print(">>>Migrating V1->V4, custom[2->3]->lightweight[1,4], error: \(String(describing: error?.localizedDescription))")
 	}
 }
